@@ -10,7 +10,7 @@ Base.metadata.create_all(bind=engine)
 
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
-# Dependency
+# Dependences
 def get_db():
     db = SessionLocal()
     try:
@@ -18,12 +18,12 @@ def get_db():
     finally:
         db.close()
 
-# Register
+# Enregistrement des utilisateurs
 @router.post("/register", response_model=UserResponse)
 def register(user: UserCreate, db: Session = Depends(get_db)):
     db_user = db.query(User).filter(User.email == user.email).first()
     if db_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
+        raise HTTPException(status_code=400, detail="L'email est invalide ou déja utiliser")
     hashed_pw = hash_password(user.password)
     new_user = User(email=user.email, password_hash=hashed_pw, full_name=user.full_name, role=user.role)
     db.add(new_user)
@@ -40,7 +40,7 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
     token = create_access_token({"user_id": db_user.id, "role": db_user.role})
     return {"access_token": token, "token_type": "bearer"}
 
-# Protected route
+# Qui est connecter ?
 @router.get("/me", response_model=UserResponse)
 def read_me(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     payload = decode_access_token(token)
